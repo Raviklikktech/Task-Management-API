@@ -1,0 +1,65 @@
+Problem Statement:
+Initially, the task update operation in the provided Flask API was synchronous, meaning that when a task was updated, the system would block the main thread for 2 seconds to simulate a notification being sent. This blocking behavior could degrade API performance, especially when handling multiple concurrent requests.
+
+Solution:
+To improve efficiency, asynchronous notifications were implemented using Python's threading module. Instead of waiting for the notification process to complete, the API now delegates this task to a background thread, allowing the main thread to remain free and responsive.
+
+Key Changes:
+1. Introduced a Background Thread: The function send_notification(task_id) now runs in a separate thread, ensuring that the API immediately responds to the client without waiting.
+2. Modified update_task() Endpoint:
+   - Calls send_notification(task_id) using Python’s threading.Thread.
+   - Updates the task without blocking execution.
+   - Returns a response immediately, improving API speed.
+
+Benefits of Asynchronous Notifications:
+Non-blocking API Calls – Faster response times for the user.
+Scalable – Multiple update requests can be handled concurrently.
+Efficient – Ensures the main application thread remains free.
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Description of How the Backend API Streams Updates to an RxJS Frontend
+
+Requirement:
+For real-time updates in the frontend using RxJS, we need the backend to provide a continuous stream of task updates. Instead of clients manually polling for changes, we use Server-Sent Events (SSE) to push updates automatically.
+
+Technology Stack:
+Backend API - Flask
+Real-time Streaming - Server-Sent Events (SSE)
+Frontend Handling - RxJS Observables
+Asynchronous Processing - Python threading
+
+Backend API Design for Streaming Updates:
+1. Clients subscribe to updates by connecting to the SSE endpoint (`/api/tasks/stream`).
+2. Backend keeps a list of active SSE clients.
+3. When a task is modified, the backend pushes updates to all connected clients.
+
+Frontend RxJS Integration:
+The frontend listens for real-time updates using RxJS Observables:
+
+```javascript
+import { fromEventSource } from 'rxjs-websockets';
+
+const eventSource = new EventSource("http://127.0.0.1:5000/api/tasks/stream");
+
+const taskUpdates$ = fromEventSource(eventSource);
+
+taskUpdates$.subscribe({
+  next: (event) => console.log("Task update received:", event.data),
+  error: (err) => console.error("SSE Error:", err)
+});
+```
+
+Why SSE is the Best Choice?
+Lightweight – Uses standard HTTP without extra protocols.
+Auto-reconnect – No need for manual reconnection handling.
+Efficient for notifications – No unnecessary client-to-server traffic.
+
+
+Summary:
+1. Asynchronous notifications improve API performance by using `threading`.
+2. Server-Sent Events (SSE) efficiently **streams updates** to the RxJS frontend.
+3. RxJS Observables make the frontend reactively update the UI when tasks change.
+
+This design ensures a scalable, efficient, and real-time task management system.
+
